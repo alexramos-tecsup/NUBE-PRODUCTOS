@@ -1,46 +1,26 @@
 import React, { Component } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import * as Realm from "realm-web";
 
+const realmid = process.env.REACT_APP_REALM;
+const app = new Realm.App({ id: realmid });
 class Prestamo extends Component {
+  async componentDidMount() {
+    try {
+      const credentials = Realm.Credentials.anonymous();
+      const user = await app.logIn(credentials);
+      const all = await user.functions.getAll();
+      this.setState({ productos: all });
+    } catch (error) {
+      console.error(error);
+    }
+  }
   constructor(props) {
     super(props);
     this.state = {
-      productos: [
-        {
-          id: 1,
-          nombre: "Mouse",
-          marca: "Razer",
-          modelo: "Deathhadder v2",
-          precio: 150,
-          estado: "nuevo",
-        },
-        {
-          id: 2,
-          nombre: "Teclado",
-          marca: "Razer",
-          modelo: "Blackwidow lite",
-          precio: 300,
-          estado: "nuevo",
-        },
-        {
-          id: 3,
-          nombre: "Headset",
-          marca: "Corsair",
-          modelo: "void rgb elite wireless",
-          precio: 300,
-          estado: "nuevo",
-        },
-        {
-          id: 4,
-          nombre: "Laptop",
-          marca: "Apple",
-          modelo: "Macbook air m1",
-          precio: 4300,
-          estado: "nuevo",
-        },
-      ],
+      productos: [],
       titulo: "Nuevo",
-      id: 0,
+      _id: 0,
       pos: null,
       nombre: "",
       marca: "",
@@ -90,28 +70,32 @@ class Prestamo extends Component {
   /* END CAMBIOS */
 
   /* Mostrar*/
-  mostrar(index) {
-    const row = this.state.productos[index];
-    if (row) {
-      this.setState({
-        pos: index,
-        id: index,
-        titulo: "Editar",
-        nombre: row.nombre,
-        marca: row.marca,
-        modelo: row.modelo,
-        precio: row.precio,
-        estado: row.estado,
-      });
-    } else {
-      return;
-    }
+  async mostrar(cod, index) {
+    try {
+      const credentials = Realm.Credentials.anonymous();
+      const user = await app.logIn(credentials);
+      const row = await user.functions.getOne(cod);
+      if (row) {
+        this.setState({
+          pos: index,
+          id: index,
+          titulo: "Editar",
+          nombre: row.nombre,
+          marca: row.marca,
+          modelo: row.modelo,
+          precio: row.precio,
+          estado: row.estado,
+        });
+      } else {
+        return;
+      }
+    } catch (error) {}
   }
 
   /* Guardar */
-  guardar(e) {
+  async guardar(e) {
     e.preventDefault();
-    let cod = this.state.id;
+    let cod = this.state._id;
     let datos = {
       nombre: this.state.nombre,
       marca: this.state.marca,
@@ -121,46 +105,57 @@ class Prestamo extends Component {
     };
     if (cod > 0) {
       //Actualizar un registro
-      let indx = Number(cod);
-      var temp = this.state.productos;
-      temp[indx] = datos;
-      this.setState({
-        titulo: "Nuevo",
-        pos: null,
-        id: 0,
-        nombre: "",
-        marca: "",
-        modelo: "",
-        precio: "",
-        estado: "",
-        productos: temp,
-      });
+      try {
+        const credentials = Realm.Credentials.anonymous();
+        const user = await app.logIn(credentials);
+        await user.functions.editar(cod, datos);
+        let indx = this.state.pos;
+        var temp = this.state.productos;
+        temp[indx] = datos;
+        this.setState({
+          titulo: "Nuevo",
+          pos: null,
+          _id: 0,
+          nombre: "",
+          marca: "",
+          modelo: "",
+          precio: "",
+          estado: "",
+          productos: temp,
+        });
+      } catch (error) {}
     } else {
       //Nuevo Registro
-      this.state.productos.push(datos);
-      let temp = this.state.productos;
-      this.setState({
-        id: 0,
-        nombre: "",
-        marca: "",
-        modelo: "",
-        precio: "",
-        estado: "",
-        productos: temp,
-      });
+      try {
+        const credentials = Realm.Credentials.anonymous();
+        const user = await app.logIn(credentials);
+        await user.functions.create(datos);
+        this.state.productos.push(datos);
+        let temp = this.state.productos;
+        this.setState({
+          id: 0,
+          nombre: "",
+          marca: "",
+          modelo: "",
+          precio: "",
+          estado: "",
+          productos: temp,
+        });
+      } catch (error) {}
     }
   }
 
-  eliminar(index) {
-    let rpta = window.confirm("Desea eliminar?");
-    if (rpta) {
-      let temp = this.state.productos.filter(
-        (producto) => producto.id !== index
-      );
-      this.setState({
-        productos: temp,
-      });
-    }
+  async eliminar(cod, index) {
+    try {
+      let rpta = window.confirm("Desea eliminar?");
+      if (rpta) {
+        const credentials = Realm.Credentials.anonymous();
+        const user = await app.logIn(credentials);
+        console.log(cod);
+        await user.functions.borrar(cod);
+        window.location.reload();
+      }
+    } catch (error) {}
   }
 
   render() {
@@ -175,23 +170,34 @@ class Prestamo extends Component {
               <th>Modelo</th>
               <th>Precio</th>
               <th>Estado</th>
+              <th>Imagen</th>
               <th colspan="2">Opciones</th>
             </tr>
           </thead>
           <tbody>
             {this.state.productos.map((producto, index) => {
               return (
-                <tr key={producto.id}>
+                <tr key={producto._id}>
                   <td>{producto.nombre}</td>
                   <td>{producto.marca}</td>
                   <td>{producto.modelo}</td>
                   <td>{producto.precio}</td>
                   <td>{producto.estado}</td>
                   <td>
-                    <button onClick={() => this.mostrar(index)}>Editar</button>
+                    <img
+                      src={producto.imagen}
+                      width="50px"
+                      height="50px"
+                      alt={producto.imagen}
+                    ></img>
                   </td>
                   <td>
-                    <button onClick={() => this.eliminar(index)}>
+                    <button onClick={() => this.mostrar(producto._id, index)}>
+                      Editar
+                    </button>
+                  </td>
+                  <td>
+                    <button onClick={() => this.eliminar(producto._id, index)}>
                       Eliminar
                     </button>
                   </td>
