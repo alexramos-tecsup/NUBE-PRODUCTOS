@@ -78,7 +78,7 @@ class Prestamo extends Component {
       if (row) {
         this.setState({
           pos: index,
-          id: index,
+          _id: cod,
           titulo: "Editar",
           nombre: row.nombre,
           marca: row.marca,
@@ -103,7 +103,7 @@ class Prestamo extends Component {
       precio: this.state.precio,
       estado: this.state.estado,
     };
-    if (cod > 0) {
+    if (cod) {
       //Actualizar un registro
       try {
         const credentials = Realm.Credentials.anonymous();
