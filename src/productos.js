@@ -1,20 +1,22 @@
 import React, { Component } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import * as Realm from "realm-web";
-const { upload } = require("./aws");
 
 const realmid = process.env.REACT_APP_REALM;
 const app = new Realm.App({ id: realmid });
 class Prestamo extends Component {
-  handleChange = (e) => {
-    console.log(e.target.files[0]);
-    //El archivo
-    e.preventDefault();
-    upload(e.target.files[0]);
-    this.setState({
-      imagen: e.target.files[0],
-    });
-  };
+  async handleChange(e) {
+    try {
+      const credentials = Realm.Credentials.anonymous();
+      const user = await app.logIn(credentials);
+      const file = await user.functions.postImage(e);
+      console.log(file);
+      //El archivo
+      this.setState({
+        imagen: file,
+      });
+    } catch (error) {}
+  }
   async componentDidMount() {
     try {
       const credentials = Realm.Credentials.anonymous();
