@@ -1,6 +1,11 @@
 const aws = require("aws-sdk");
-
-aws.config.update({ region: "us-east-1" });
+const fs = require("fs");
+//require("dotenv").config();
+aws.config.update({
+  region: "us-east-1",
+  accessKeyId: process.env.REACT_APP_AWS_ID,
+  secretAccessKey: process.env.REACT_APP_AWS_KEY,
+});
 
 // Create S3 service object
 let s3 = new aws.S3();
@@ -10,14 +15,29 @@ var bucketParams = {
   Bucket: "productos-bucket",
 };
 
-// Call S3 to obtain a list of the objects in the bucket
-s3.listObjects(bucketParams, function (err, data) {
+export function upload(file) {
+  //const filestream = fs.createReadStream(file.path);
+  const uploadParams = {
+    Bucket: "productos-bucket",
+    Body: file,
+    Key: file.name,
+  };
+  return s3.upload(uploadParams).promise();
+}
+
+/* 
+const res = s3.listObjects(bucketParams, function (err, data) {
+  console.log(res);
   if (err) {
     console.log("Error", err);
   } else {
     console.log("Success", data);
   }
 });
+
+export default s3;
+
+ */
 
 /* async function name(params) {
   try {

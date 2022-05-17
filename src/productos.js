@@ -1,10 +1,20 @@
 import React, { Component } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import * as Realm from "realm-web";
+const { upload } = require("./aws");
 
 const realmid = process.env.REACT_APP_REALM;
 const app = new Realm.App({ id: realmid });
 class Prestamo extends Component {
+  handleChange = (e) => {
+    console.log(e.target.files[0]);
+    //El archivo
+    e.preventDefault();
+    upload(e.target.files[0]);
+    this.setState({
+      imagen: e.target.files[0],
+    });
+  };
   async componentDidMount() {
     try {
       const credentials = Realm.Credentials.anonymous();
@@ -27,12 +37,14 @@ class Prestamo extends Component {
       modelo: "",
       precio: "",
       estado: "",
+      /* imagen: "" */
     };
     this.cambioNombre = this.cambioNombre.bind(this);
     this.cambioMarca = this.cambioMarca.bind(this);
     this.cambioModelo = this.cambioModelo.bind(this);
     this.cambioPrecio = this.cambioPrecio.bind(this);
     this.cambioEstado = this.cambioEstado.bind(this);
+    //this.cambioImagen = this.cambioImagen.bind(this);
     this.mostrar = this.mostrar.bind(this);
     this.eliminar = this.eliminar.bind(this);
     this.guardar = this.guardar.bind(this);
@@ -67,6 +79,11 @@ class Prestamo extends Component {
       estado: e.target.value,
     });
   }
+  /* cambioImagen(e) {
+    this.setState({
+      imagen: e.target.value,
+    });
+  } */
   /* END CAMBIOS */
 
   /* Mostrar*/
@@ -102,7 +119,10 @@ class Prestamo extends Component {
       modelo: this.state.modelo,
       precio: this.state.precio,
       estado: this.state.estado,
+      imagen: this.state.imagen,
     };
+    console.log(cod);
+    console.log(datos);
     if (cod) {
       //Actualizar un registro
       try {
@@ -145,7 +165,7 @@ class Prestamo extends Component {
     }
   }
 
-  async eliminar(cod, index) {
+  async eliminar(cod) {
     try {
       let rpta = window.confirm("Desea eliminar?");
       if (rpta) {
@@ -188,7 +208,7 @@ class Prestamo extends Component {
                       src={producto.imagen}
                       width="50px"
                       height="50px"
-                      alt={producto.imagen}
+                      alt={producto.nombre}
                     ></img>
                   </td>
                   <td>
@@ -197,7 +217,7 @@ class Prestamo extends Component {
                     </button>
                   </td>
                   <td>
-                    <button onClick={() => this.eliminar(producto._id, index)}>
+                    <button onClick={() => this.eliminar(producto._id)}>
                       Eliminar
                     </button>
                   </td>
@@ -209,7 +229,7 @@ class Prestamo extends Component {
         <br></br>
         <h1>{this.state.titulo}</h1>
         {/* Formulario */}
-        <form onSubmit={this.guardar}>
+        <form onSubmit={this.guardar} enctype="multipart/form-data">
           <input type="hidden" value={this.state.id}></input>
           <p class="mb-3 row">
             <label class="col-sm-3 col-form-label">Ingrese Nombre:</label>
@@ -254,6 +274,16 @@ class Prestamo extends Component {
               type="text"
               value={this.state.estado}
               onChange={this.cambioEstado}
+            ></input>
+          </p>
+          <p class="mb-3 row">
+            <label class="col-sm-3 col-form-label">Subir Imagen:</label>
+            <input
+              class="col-sm-4"
+              type="file"
+              name="image"
+              //value={this.state.imagen}
+              onChange={this.handleChange}
             ></input>
           </p>
           <br></br>
