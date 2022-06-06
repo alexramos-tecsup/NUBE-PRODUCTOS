@@ -3,13 +3,17 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import * as Realm from "realm-web";
 
 const realmid = process.env.REACT_APP_REALM;
+const id = process.env.REACT_APP_ACCESS_KEY_ID;
+const key = process.env.REACT_APP_SECRET_ACCESS_KEY;
+const bucket = process.env.REACT_APP_BUCKET_NAME;
 const app = new Realm.App({ id: realmid });
+
 class Prestamo extends Component {
   async handleChange(e) {
     try {
       const credentials = Realm.Credentials.anonymous();
       const user = await app.logIn(credentials);
-      const file = await user.functions.postImage(e);
+      const file = await user.functions.postImage(e,id,key,bucket);
       console.log(file);
       //El archivo
       this.setState({
